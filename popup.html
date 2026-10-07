@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { width: 320px; padding: 14px; }
+  h1 { font-size: 14px; margin: 0 0 2px; }
+  .row { display: flex; gap: 6px; align-items: center; }
+  .section { margin-top: 14px; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+  .stat b { display: block; font-size: 18px; }
+  .stat span { font-size: 11px; color: var(--muted); }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; justify-content: space-between; align-items: center; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 4px 4px 8px; margin-bottom: 4px; }
+  li button { padding: 2px 8px; }
+  input[type=text] { flex: 1; min-width: 0; }
+  .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .dot.on { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 25%, transparent); }
+  .full { width: 100%; }
+  #msg { min-height: 16px; font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <h1>Endpoint Mapper</h1>
+  <div class="muted">Click through the site normally. Every new endpoint and the shape of its data is recorded.</div>
+
+  <div class="section row" style="justify-content: space-between;">
+    <label class="toggle"><span id="dot" class="dot"></span><span id="recLabel">Recording</span></label>
+    <button id="recBtn">Pause</button>
+  </div>
+
+  <div class="section stats">
+    <div class="stat"><b id="sEndpoints">0</b><span>endpoints</span></div>
+    <div class="stat"><b id="sNew">0</b><span>new since mark</span></div>
+    <div class="stat"><b id="sPages">0</b><span>pages</span></div>
+  </div>
+
+  <div class="section">
+    <div class="label">Sites being mapped</div>
+    <ul id="domains"></ul>
+    <button id="addCurrent" class="full">+ Add current site</button>
+    <div class="row" style="margin-top:6px">
+      <input type="text" id="domainInput" placeholder="mychart.example.org">
+      <button id="addBtn">Add</button>
+    </div>
+    <div id="msg" class="muted"></div>
+    <div id="diag" class="muted" style="font-size:11px"></div>
+  </div>
+
+  <div class="section row">
+    <button id="markBtn" style="flex:1">Mark now</button>
+    <button id="openBtn" class="primary" style="flex:1">Open dashboard</button>
+  </div>
+<script src="popup.js"></script>
+</body>
+</html>

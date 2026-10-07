@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Endpoint Mapper</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { padding: 24px 28px 48px; max-width: 1400px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 18px 0; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .tile b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+  .tile span { color: var(--muted); font-size: 12px; }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+  .tabs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 14px; color: var(--muted); }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .toolbar input[type=search] { flex: 1; min-width: 220px; }
+  .toolbar label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600;
+    position: sticky; top: 0; background: var(--panel); cursor: pointer; user-select: none; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr.new td { background: var(--ok-soft); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .path { word-break: break-all; }
+  .empty { padding: 32px; text-align: center; color: var(--muted); }
+  .note { margin-top: 16px; color: var(--muted); font-size: 12px; }
+  .hint { color: var(--muted); margin: 0 0 10px; }
+  [hidden] { display: none !important; }
+  tr.ep { cursor: pointer; }
+  tr.ep:hover td { background: color-mix(in srgb, var(--accent-soft) 50%, transparent); }
+  tr.detail td { background: var(--bg); }
+  .shapes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .shapes pre { margin: 4px 0 0; max-height: 420px; overflow: auto; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px; font: 11.5px/1.4 var(--mono); }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Endpoint Mapper</h1>
+    <div class="muted" id="sub">—</div>
+  </div>
+  <div class="actions">
+    <button id="markBtn">Mark now</button>
+    <button id="scanBtn">Scan JavaScript</button>
+    <button id="oasBtn" class="primary">Export OpenAPI</button>
+    <button id="jsonBtn">Export JSON</button>
+    <button id="csvBtn">Export CSV</button>
+    <button id="clearBtn" class="danger">Clear all</button>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><b id="tEndpoints">0</b><span>unique endpoints</span></div>
+  <div class="tile"><b id="tRequests">0</b><span>requests seen</span></div>
+  <div class="tile"><b id="tNew">–</b><span>new since mark</span></div>
+  <div class="tile"><b id="tPages">0</b><span>pages visited</span></div>
+  <div class="tile"><b id="tJsOnly">–</b><span>in JS, not triggered</span></div>
+</div>
+
+<div class="tabs">
+  <button data-tab="endpoints" class="active">Endpoints</button>
+  <button data-tab="pages">Pages</button>
+  <button data-tab="jsonly">In JS, not triggered</button>
+</div>
+
+<section id="endpoints">
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Filter by path, parameter or page…">
+    <select id="method"><option value="">All methods</option></select>
+    <label><input type="checkbox" id="onlyNew"> Only new since mark</label>
+  </div>
+  <div class="wrap"><table>
+    <thead><tr>
+      <th data-k="method">Method</th><th data-k="path">Path</th><th data-k="params">Query params</th>
+      <th data-k="count" class="num">Count</th><th data-k="statuses">Status</th><th data-k="types">Type</th>
+      <th data-k="firstPage">First seen on</th><th data-k="firstSeen">When</th>
+    </tr></thead>
+    <tbody id="epBody"></tbody>
+  </table></div>
+</section>
+
+<section id="pages" hidden>
+  <p class="hint">Pages that revealed few or no new endpoints are covered. Pages with many new ones are worth exploring further: scroll, expand, filter, open details.</p>
+  <div class="wrap"><table>
+    <thead><tr><th>Page</th><th class="num">Visits</th><th class="num">New endpoints revealed</th></tr></thead>
+    <tbody id="pgBody"></tbody>
+  </table></div>
+</section>
+
+<section id="jsonly" hidden>
+  <p class="hint">Path-like strings found in the site's scripts that no captured request matches yet. Many will be noise; the real ones point to features you haven't clicked. Press <b>Scan JavaScript</b> after browsing to refresh.</p>
+  <div class="toolbar"><input type="search" id="jq" placeholder="Filter…"></div>
+  <div class="wrap"><table>
+    <thead><tr><th>Path in JS</th><th>Found in</th></tr></thead>
+    <tbody id="jsBody"></tbody>
+  </table></div>
+</section>
+
+<p class="note">Stored locally in this browser only. Recorded per endpoint: method, host, path with IDs replaced by placeholders, query parameter names, status codes, the page it came from, and the shape of JSON bodies (field names and value types). No values, headers, cookies or tokens are kept. Click an endpoint to see its shape.</p>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
